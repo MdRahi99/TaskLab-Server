@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 
 const app = express();
@@ -12,131 +12,67 @@ app.use(cors());
 app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.yaqgjrz.mongodb.net/?retryWrites=true&w=majority`;
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+const client = new MongoClient(uri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverApi: ServerApiVersion.v1,
+});
 
-async function run(){
-  try{
-    const taskAddition =client.db('allTask').collection('taskContainer');
-    const dailyTaskCollection =client.db('allTask').collection('dailyTask');
+async function run() {
+  try {
+    const taskAddition = client.db("allTask").collection("taskContainer");
 
-    //daily Tasks
-    app.post("/dailyTasks", async (req, res) => {
-      const postDailyTask = req.body;
-      const result = await dailyTaskCollection.insertOne(postDailyTask);
-      res.send(result);
-    });
-    
-    //get daily Tasks By Email
-    app.get('/dailyTasks/:email',async(req,res)=>{
-      const email = req.params.email;
-      const query = {email}
-      const user = await taskAddition.find(query).toArray();
-      res.send(user);
-    })
-    
-    //get Completed Tasks By Role
-    app.get('/daily/:role',async(req,res)=>{
-      const role = req.params.role;
-      const query = {role}
-      const user = await taskAddition.find(query).toArray();
-      res.send(user);
-    })
-
-    //get all daily Tasks
-    app.get('/dailyTasks',async(req,res)=>{
-      const email = req.params.email;
-      const query = {email}
-      const user = await dailyTaskCollection.find(query).toArray();
-      res.send(user);
-    })
-
-     //complete task 
-
-    
-     app.put('/dailyTasks/:id',async(req,res)=>{
-     
-
-      const id = req.params.id;
-      const filter = { _id: ObjectId(id)}
-      const options = {upsert: true};
-      const updatedDoc ={
-        $set:{
-          role: 'taskCompleted'
-        }
-      }
-      const result = await taskAddition.updateOne(filter,updatedDoc,options);
-      res.send(result);
-
-    })
-
-    //delete
-
-    app.delete('/dailyTasks/:id', async(req,res)=>{
-      const id = req.params.id;
-      const filter = {
-        _id: ObjectId(id)
-      };
-      const result = await taskAddition.deleteOne(filter);
-      res.send(result);
-    })
-
-
-
-
-//post task
+    //post task
     app.post("/addTask", async (req, res) => {
       const postTask = req.body;
       const result = await taskAddition.insertOne(postTask);
       res.send(result);
     });
 
-
-   //get allTasks By email
-    app.get('/allTasks/:email',async(req,res)=>{
+    //get allTasks By email
+    app.get("/allTasks/:email", async (req, res) => {
       const email = req.params.email;
-      const query = {email}
+      const query = { email };
       const user = await taskAddition.find(query).toArray();
       res.send(user);
-    })
+    });
 
-    //get single media Task
-    app.get('/update/:id', async(req,res)=>{
+    //get Completed Tasks By Role
+    app.get("/completedTasks/:role", async (req, res) => {
+      const role = req.params.role;
+      const query = { role };
+      const user = await taskAddition.find(query).toArray();
+      res.send(user);
+    });
+
+    //complete task
+    app.put("/completedTasks/:id", async (req, res) => {
       const id = req.params.id;
-      const query = {_id: ObjectId(id)};
-      const result = await taskAddition.findOne(query);
-      res.send(result)
-    })
-
-
-    //update function
-    app.put('/update/:id',async(req,res)=>{
-      const id = req.params.id;
-      const filter = {_id: ObjectId(id)};
-      const task= req.body;
-      const option = {upsert:true};
-      const updatedTask = {
+      const filter = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const updatedDoc = {
         $set: {
-          name: task.name,
-          email: task.email,
-          taskTitle: task.taskTitle,
-          img: task.img,
-          description: task.description
-        }
-
-      }
-      const result = await taskAddition.updateOne(filter, updatedTask, option);
+          role: "taskCompleted",
+        },
+      };
+      const result = await taskAddition.updateOne(filter, updatedDoc, options);
       res.send(result);
-    })
-   
+    });
 
+    //delete
+    app.delete("/completedTasks/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = {
+        _id: ObjectId(id),
+      };
+      const result = await taskAddition.deleteOne(filter);
+      res.send(result);
+    });
+    
+  } finally {
   }
-  finally{
-
-  }
-
 }
 run().catch(console.log);
-
 
 app.get("/", (req, res) => {
   res.send("TaskLab server us running");
